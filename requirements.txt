@@ -1,0 +1,8 @@
+numpy
+opencv-python
+imutils
+pylsd
+pytest
+flake8
+mypy
+scipy

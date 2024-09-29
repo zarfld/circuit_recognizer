@@ -1,3 +1,5 @@
+# ![CI Pipeline](https://github.com/zarfld/circuit_recognizer/actions/workflows/ci.yml/badge.svg)
+
 # Circuit Recognizer Plugin for DIY Layout Creator
 
 ## Overview
