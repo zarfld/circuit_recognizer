@@ -6,6 +6,7 @@ from pylsd import lsd
 from random import randint
 from segment import *
 from copy import deepcopy
+from skimage import color
 
 process_stage = 0
 prev_stage = -1
@@ -81,7 +82,14 @@ def draw_result_boxes(img,boxes):
         text = ['v_source','capacitor','ground','diode','resistor','inductor', 'transistor', 'IC', 'transformer']
         font = cv2.FONT_HERSHEY_SIMPLEX
         for ((x,y,w,h),idx) in boxes:
-            cv2.putText(img, text[idx] ,(x-5,y-5),font,0.6,(250,0,0),1,cv2.LINE_AA)
+            if idx == 4:  # Resistor
+                resistance, tolerance, temp_coeff = interpret_color_code(img[y:y+h, x:x+w])
+                label = f"{resistance}Ω ±{tolerance}%"
+                if temp_coeff:
+                    label += f" {temp_coeff}ppm/°C"
+                cv2.putText(img, label, (x-5, y-5), font, 0.6, (250, 0, 0), 1, cv2.LINE_AA)
+            else:
+                cv2.putText(img, text[idx] ,(x-5,y-5),font,0.6,(250,0,0),1,cv2.LINE_AA)
             cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),1)
 
 def get_v_s_orientation(x,y,w,h,pairs):
@@ -140,7 +148,7 @@ def get_diode_orientation(x,y,w,h,pairs):
 def output_file(wires,comp):
     counter  = np.zeros(9, dtype=np.int8)
     label    = ['voltage','cap','ground','diode','res','ind', 'transistor', 'IC', 'transformer']
-    abb      = ['V','C','G','D','R','L', 'T', 'IC', 'TR']
+    abb      = ['V','C','G','D','R','L', 'T','IC', 'TR']
     offset   = [[0,16],[16,0],[0,0],[16,0],[16,16],[16,16], [16,16], [16,16], [16,16]]
     filename = "{}.asc".format(str(sys.argv[1])[:-4])
     x = 0
@@ -238,6 +246,7 @@ def handle_upload(file_path):
     v_boxes = box_between_ends(v_pairs)
     h_boxes = box_between_ends(h_pairs)
     boxes = v_boxes + h_boxes
+    detect_resistors(src)
 
 def visualize_components():
     global src, org, boxes
@@ -295,6 +304,69 @@ def integrate_components():
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     cv2.destroyAllWindows()
+
+def detect_resistors(image):
+    global boxes
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 150)
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        aspect_ratio = w / float(h)
+        if 2.0 < aspect_ratio < 5.0:  # Typical aspect ratio for resistors
+            boxes.append([[x, y, w, h], 4])  # 4 is the index for resistors
+
+def interpret_color_code(resistor_image):
+    resistor_image = cv2.cvtColor(resistor_image, cv2.COLOR_BGR2RGB)
+    resistor_image = cv2.resize(resistor_image, (200, 50))
+    bands = segment_color_bands(resistor_image)
+    colors = [color.rgb2lab(band) for band in bands]
+    color_codes = {
+        "black": (0, 0, 0),
+        "brown": (1, 10, 1, 100),
+        "red": (2, 100, 2, 50),
+        "orange": (3, 1000, None, 15),
+        "yellow": (4, 10000, None, 25),
+        "green": (5, 100000, 0.5, None),
+        "blue": (6, 1000000, 0.25, None),
+        "violet": (7, 10000000, 0.1, None),
+        "grey": (8, None, 0.05, None),
+        "white": (9, None, None, None),
+        "gold": (None, 0.1, 5, None),
+        "silver": (None, 0.01, 10, None)
+    }
+    band_values = []
+    for color_lab in colors:
+        min_distance = float('inf')
+        closest_color = None
+        for color_name, color_value in color_codes.items():
+            distance = np.linalg.norm(color_lab - color.rgb2lab(np.uint8([[color_value[:3]]])))
+            if distance < min_distance:
+                min_distance = distance
+                closest_color = color_name
+        band_values.append(color_codes[closest_color])
+    if len(band_values) == 4:
+        resistance = (band_values[0][0] * 10 + band_values[1][0]) * band_values[2][1]
+        tolerance = band_values[3][2]
+        temp_coeff = None
+    elif len(band_values) == 5:
+        resistance = (band_values[0][0] * 100 + band_values[1][0] * 10 + band_values[2][0]) * band_values[3][1]
+        tolerance = band_values[4][2]
+        temp_coeff = None
+    elif len(band_values) == 6:
+        resistance = (band_values[0][0] * 100 + band_values[1][0] * 10 + band_values[2][0]) * band_values[3][1]
+        tolerance = band_values[4][2]
+        temp_coeff = band_values[5][3]
+    return resistance, tolerance, temp_coeff
+
+def segment_color_bands(resistor_image):
+    height, width, _ = resistor_image.shape
+    band_width = width // 6
+    bands = []
+    for i in range(6):
+        band = resistor_image[:, i * band_width:(i + 1) * band_width]
+        bands.append(band)
+    return bands
 
 # mouse callback function
 def mouse_event(event,x,y,flags,param):

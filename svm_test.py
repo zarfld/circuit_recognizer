@@ -144,3 +144,9 @@ if __name__ == '__main__':
         recall = cnn_truePos[i] / float((total / 3))
         print("CNN {} \nprecision :{:.3f}\trecall :{:.3f}".format(i, precision, recall))
         print("CNN {}\t{}".format(cnn_truePos[i], total / 3))
+
+    # Resistor color code detection testing
+    resistor_test_images = [cv2.imread(data, 1) for data in testData if "resistor" in data]
+    for resistor_image in resistor_test_images:
+        resistance, tolerance, temp_coeff = interpret_color_code(resistor_image)
+        print(f"Resistor: {resistance}Ω ±{tolerance}% {temp_coeff}ppm/°C" if temp_coeff else f"Resistor: {resistance}Ω ±{tolerance}%")
