@@ -38,6 +38,25 @@ def load_trainData(image_path):
 
     return trainData,trainLabel
 
+def augment_image(image):
+    augmented_images = []
+    rows, cols = image.shape
+
+    # Original image
+    augmented_images.append(image)
+
+    # Rotations
+    for angle in [90, 180, 270]:
+        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
+        dst = cv2.warpAffine(image, M, (cols, rows))
+        augmented_images.append(dst)
+
+    # Flipping
+    augmented_images.append(cv2.flip(image, 0))  # Vertical flip
+    augmented_images.append(cv2.flip(image, 1))  # Horizontal flip
+    augmented_images.append(cv2.flip(image, -1))  # Both axes flip
+
+    return augmented_images
 
 if __name__ == '__main__':
 
@@ -57,12 +76,9 @@ if __name__ == '__main__':
         th = cv2.adaptiveThreshold(gauss_img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
         		cv2.THRESH_BINARY_INV,11,2)
 
-        hog_descriptors.append(hog.compute(th))
-        rows,cols = resized_img.shape
-        for i in [1,2,3]:
-            M   = cv2.getRotationMatrix2D((cols/2,rows/2),i*90,1)
-            dst = cv2.warpAffine(th,M,(cols,rows))
-            hog_descriptors.append(hog.compute(dst))
+        augmented_images = augment_image(th)
+        for aug_img in augmented_images:
+            hog_descriptors.append(hog.compute(aug_img))
 
         k = k+1
 

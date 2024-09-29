@@ -13,6 +13,8 @@ ix,iy = -1,-1
 flagx = 0
 edit_flag = 0
 boxes=[]
+undo_stack = []
+redo_stack = []
 
 def get_hog() :
     winSize = (100,100)
@@ -158,7 +160,7 @@ def output_file(wires,comp):
 
         if angle == 0:
             x = x1-offset[type_id][0]
-            y = y1-offset[type_id][1]
+            y = x1-offset[type_id][1]
         elif angle == 90:
             if (type_id == 0):
                 x = x1+offset[type_id][1]*6
@@ -204,9 +206,96 @@ def svm_predict(th2,rects,boxes):
         boxes.append([[int(x),int(y),int(x2-x),int(y2-y)],idx])
     return boxes
 
+def handle_undo():
+    global boxes, undo_stack, redo_stack
+    if undo_stack:
+        redo_stack.append(deepcopy(boxes))
+        boxes = undo_stack.pop()
+
+def handle_redo():
+    global boxes, undo_stack, redo_stack
+    if redo_stack:
+        undo_stack.append(deepcopy(boxes))
+        boxes = redo_stack.pop()
+
+def handle_upload(file_path):
+    global src, org, gray, th, th2, bw, ends, v_pairs, h_pairs, v_boxes, h_boxes, boxes
+    src = cv2.imread(file_path)
+    src = imutils.resize(src, width=640)
+    org = src.copy()
+    gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
+    img = cv2.GaussianBlur(gray, (9, 9), 0)
+    th = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+    th2 = th.copy()
+    bw = thinning(th)
+    cv2.imwrite("data/skel.pgm", bw)
+    cv2.imwrite("data/th.pgm", th2)
+    ends = skeleton_points(bw)
+    v_pairs, h_pairs = lines_between_ends(ends)
+    v_boxes = box_between_ends(v_pairs)
+    h_boxes = box_between_ends(h_pairs)
+    boxes = v_boxes + h_boxes
+
+def visualize_components():
+    global src, org, boxes
+    src = org.copy()
+    draw_result_boxes(src, boxes)
+    menubar = get_menubar()
+    lastimg = np.vstack((src, menubar))
+    cv2.imshow("recognizer", lastimg)
+
+def manually_assign_component_type(edit):
+    global boxes, edit_flag
+    text = ['v_source', 'capacitor', 'ground', 'diode', 'resistor', 'inductor']
+    edit = np.zeros((300, 150, 3), dtype=np.uint8)
+    cv2.rectangle(edit, (0, 0), (150, 300), (255, 255, 255), -1)
+    for i in range(len(text)):
+        cv2.rectangle(edit, (20, i * 40 + 20), (120, i * 40 + 50), (0, 0, 255), -1)
+        cv2.putText(edit, text[i], (30, i * 40 + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+    while edit_flag != 1:
+        cv2.imshow("edit", edit)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    cv2.destroyWindow("edit")
+    edit_flag = 0
+
+def integrate_components():
+    global boxes, th, th2, bw, ends, v_pairs, h_pairs, v_boxes, h_boxes, org, src, process_stage, prev_stage, flagx
+    for ((x, y, w, h), idx) in boxes:
+        th[y:y + h, x:x + w] = 0
+    lsd_lines = lsd(th)
+    for line in lsd_lines:
+        x1, y1, x2, y2, w = line
+        angle = np.abs(np.rad2deg(np.arctan2(y1 - y2, x1 - x2)))
+        if (angle < 105 and angle > 75) or angle > 160 or angle < 20:
+            cv2.line(th, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 0), 6)
+    kernel = np.ones((11, 11), np.uint8)
+    closing = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel)
+    rects = []
+    cnts = cv2.findContours(closing.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+    for c in cnts:
+        if cv2.contourArea(c) < 80:
+            continue
+        else:
+            x, y, w, h = cv2.boundingRect(c)
+            maxedge = max(w, h)
+            x, y = int(((2 * x + w) - maxedge) / 2), int(((2 * y + h) - maxedge) / 2)
+            rects.append([x - 10, y - 10, x + maxedge + 10, y + maxedge + 10])
+    rects = non_max_suppression_fast(np.array(rects, dtype=float), 0.1)
+    boxes = svm_predict(th2, rects, boxes)
+    while process_stage < 3:
+        src = org.copy()
+        draw_result_boxes(src, boxes)
+        menubar = get_menubar()
+        lastimg = np.vstack((src, menubar))
+        cv2.imshow("recognizer", lastimg)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    cv2.destroyAllWindows()
+
 # mouse callback function
 def mouse_event(event,x,y,flags,param):
-    global process_stage,prev_stage,ix,iy,boxes,edit_flag
+    global process_stage,prev_stage,ix,iy,boxes,edit_flag,undo_stack,redo_stack
     boxes_t = []
     del_list = []
     edit = 0
@@ -286,33 +375,12 @@ def mouse_event_edit(event,x,y,flags,param):
                 edit_flag = 1
                 break
 
-
-
-
-
 if __name__ == "__main__":
     cv2.namedWindow("recognizer")
     cv2.moveWindow("recognizer",200,100)
     cv2.setMouseCallback('recognizer',mouse_event)
 
-    src = cv2.imread(str(sys.argv[1]))
-    src = imutils.resize(src,width=640)
-    org = src.copy()
-    gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
-    ## endpoint operations
-    img = cv2.GaussianBlur(gray,(9,9),0)
-    th = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-    		cv2.THRESH_BINARY_INV,11,2)
-    th2 = th.copy()
-    bw  = thinning(th)
-    cv2.imwrite("data/skel.pgm",bw)
-    cv2.imwrite("data/th.pgm",th2)
-    ends = skeleton_points(bw)
-    ## detection of ground, capacitor, v_source
-    v_pairs,h_pairs = lines_between_ends(ends)
-    v_boxes = box_between_ends(v_pairs)
-    h_boxes = box_between_ends(h_pairs)
-    boxes = v_boxes + h_boxes
+    handle_upload(str(sys.argv[1]))
 
     ## segmentation operations
     ## remove founded symbols and connection lines
@@ -325,7 +393,7 @@ if __name__ == "__main__":
     	x1,y1,x2,y2,w = line
     	angle = np.abs(np.rad2deg(np.arctan2(y1 - y2, x1 - x2)))
     	if (angle<105 and angle>75) or angle>160 or angle<20:
-            cv2.line(th,(int(x1),int(y1)),(int(x2),int(y2)),(0,0,0),6)
+            cv2.line(th,(int(x1),int(y1)),(int(x2,y2)),(0,0,0),6)
 
     kernel = np.ones((11,11),np.uint8)
     closing = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel)
