@@ -7,6 +7,8 @@ from random import randint
 from segment import *
 from copy import deepcopy
 from skimage import color
+import json
+import os
 
 process_stage = 0
 prev_stage = -1
@@ -367,6 +369,53 @@ def segment_color_bands(resistor_image):
         band = resistor_image[:, i * band_width:(i + 1) * band_width]
         bands.append(band)
     return bands
+
+def generate_metadata_file(image_path, components):
+    metadata = {
+        "image_path": image_path,
+        "description": "Description of the image",
+        "components": components
+    }
+    metadata_path = os.path.splitext(image_path)[0] + ".json"
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=4)
+
+def create_metadata_for_existing_data(data_dir):
+    for filename in os.listdir(data_dir):
+        if filename.endswith(".jpg") or filename.endswith(".png"):
+            image_path = os.path.join(data_dir, filename)
+            components = []  # You can add logic to detect components in the image
+            generate_metadata_file(image_path, components)
+
+def read_metadata_file(metadata_path):
+    with open(metadata_path, 'r') as f:
+        metadata = json.load(f)
+    return metadata
+
+def handle_missing_metadata(image_path):
+    print(f"Warning: Metadata file is missing for {image_path}. Using default values.")
+    components = []  # Default values for components
+    return {
+        "image_path": image_path,
+        "description": "Description of the image",
+        "components": components
+    }
+
+def update_training_pipeline(data_dir):
+    for filename in os.listdir(data_dir):
+        if filename.endswith(".jpg") or filename.endswith(".png"):
+            image_path = os.path.join(data_dir, filename)
+            metadata_path = os.path.splitext(image_path)[0] + ".json"
+            if os.path.exists(metadata_path):
+                metadata = read_metadata_file(metadata_path)
+            else:
+                metadata = handle_missing_metadata(image_path)
+            # Use metadata for training and evaluation
+
+# Example usage
+data_dir = "path/to/training/data"
+create_metadata_for_existing_data(data_dir)
+update_training_pipeline(data_dir)
 
 # mouse callback function
 def mouse_event(event,x,y,flags,param):

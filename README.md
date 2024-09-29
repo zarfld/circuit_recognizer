@@ -172,3 +172,69 @@ The algorithm now includes a feature to detect resistors from a photo and interp
 - The resistor's value (with tolerance and temperature coefficient if applicable) is calculated and displayed.
 - The detection is robust against common image challenges (lighting, orientation, etc.).
 - The feature provides a clear interface for users to interact with the detected resistors.
+
+## Metadata File Format
+
+To improve the quality and clarity of training data, we have introduced an optional metadata file for each image in the training dataset. This file describes what can be detected in the image, including component types, part numbers, values, and bounding box coordinates. The metadata file makes it easier to understand what the model should recognize and serves as ground truth for training and evaluation.
+
+### Metadata File Format
+
+The metadata file is in JSON format and includes the following fields:
+
+- `image_path`: The path to the image file.
+- `description`: A description of the image.
+- `components`: A list of components detected in the image. Each component includes:
+  - `type`: The type of the component (e.g., resistor, capacitor).
+  - `part_number`: The part number of the component (optional).
+  - `value`: The value of the component (optional).
+  - `coordinates`: The bounding box coordinates of the component, including `x`, `y`, `width`, and `height`.
+
+### Example Metadata File
+
+```json
+{
+  "image_path": "path/to/image.jpg",
+  "description": "Description of the image",
+  "components": [
+    {
+      "type": "resistor",
+      "part_number": "unknown",
+      "value": "",
+      "coordinates": {
+        "x": 100,
+        "y": 150,
+        "width": 50,
+        "height": 20
+      }
+    },
+    {
+      "type": "capacitor",
+      "part_number": "C1",
+      "value": "10uF",
+      "coordinates": {
+        "x": 200,
+        "y": 250,
+        "width": 40,
+        "height": 30
+      }
+    }
+  ]
+}
+```
+
+### Creating Metadata Files
+
+To create metadata files for existing training data, follow these steps:
+
+1. Define the metadata file format as described above.
+2. For each training image, generate a corresponding metadata file that describes the components in the image.
+3. Ensure that part numbers and values are marked as optional fields. If a component does not have a part number or value, set these fields to "unknown" or an empty string.
+
+### Using Metadata Files in the Training Process
+
+To use metadata files in the training process, follow these steps:
+
+1. Modify the training pipeline to read the metadata files and use them as ground truth for training and evaluation.
+2. Ensure the system can handle both images with and without part numbers and values. If a metadata file is missing, use default values for the missing information and issue a warning to inform the user.
+
+By following these steps, you can improve the quality and clarity of the training data and make it easier to understand what the model should recognize. This will also serve as ground truth for training and evaluation.
