@@ -7,3 +7,5 @@ flake8
 mypy
 scipy
 scikit-image
+pytesseract
+tensorflow
