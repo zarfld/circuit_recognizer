@@ -3,6 +3,9 @@ import sys
 import cv2
 import numpy as np
 from sklearn.utils import shuffle
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.utils import to_categorical
 
 def get_hog():
     winSize = (100, 100)
@@ -71,6 +74,20 @@ def augment_image(image):
 
     return augmented_images
 
+def create_cnn_model(input_shape, num_classes):
+    model = Sequential()
+    model.add(Conv2D(32, (3, 3), activation='relu', input_shape=input_shape))
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Conv2D(64, (3, 3), activation='relu'))
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Conv2D(128, (3, 3), activation='relu'))
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(num_classes, activation='softmax'))
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
+
 if __name__ == "__main__":
     image_path = "data/train"
     trainData, trainLabel = load_trainData(image_path)
@@ -113,6 +130,23 @@ if __name__ == "__main__":
         np.array(augmented_labels),
     )
     svm.save("svm_data.dat")
+
+    # CNN model training
+    input_shape = (100, 100, 1)
+    num_classes = len(set(trainLabel))
+    cnn_model = create_cnn_model(input_shape, num_classes)
+
+    # Prepare data for CNN
+    train_images = []
+    for data in trainData:
+        img = cv2.imread(data, 0)
+        resized_img = cv2.resize(img, (100, 100), interpolation=cv2.INTER_CUBIC)
+        train_images.append(resized_img)
+    train_images = np.array(train_images).reshape(-1, 100, 100, 1)
+    train_labels = to_categorical(trainLabel, num_classes)
+
+    cnn_model.fit(train_images, train_labels, epochs=10, batch_size=32)
+    cnn_model.save("cnn_model.h5")
 
     test = cv2.imread("data/img.jpg", 0)
     test_hog = hog.compute(test)
