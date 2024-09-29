@@ -18,3 +18,6 @@ A clear and concise description of any alternative solutions or features you've 
 
 **Additional context**
 Add any other context or screenshots about the feature request here.
+
+**SRS.md Update Required**
+If this feature request requires updates to the SRS.md file, please describe the new feature and its impact on the SRS.md file.

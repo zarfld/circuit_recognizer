@@ -36,3 +36,9 @@ If applicable, add screenshots to help explain your problem.
 
 **Additional context**
 Add any other context about the problem here.
+
+**Discrepancies with SRS.md**
+If you found any discrepancies between the code and the SRS.md file, please describe them here.
+
+**Missing or Incorrect Documentation**
+Describe any missing or incorrect documentation related to the issue.

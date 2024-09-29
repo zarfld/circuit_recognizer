@@ -238,3 +238,39 @@ To use metadata files in the training process, follow these steps:
 2. Ensure the system can handle both images with and without part numbers and values. If a metadata file is missing, use default values for the missing information and issue a warning to inform the user.
 
 By following these steps, you can improve the quality and clarity of the training data and make it easier to understand what the model should recognize. This will also serve as ground truth for training and evaluation.
+
+## Recurring Code Review and SRS Documentation Update Process
+
+To ensure the long-term quality and consistency of both the codebase and the project documentation (`SRS.md`), a recurring code review and SRS documentation update process has been established. This process helps maintain consistency between the codebase and the documented requirements, ensuring that all features are properly implemented and described for future reference and audits.
+
+### Instructions for Code Review and SRS Update
+
+1. **Review Recent Pull Requests and Changes**:
+   - Go through the recent commits and pull requests to ensure that the new code meets the specified requirements and features as defined in `SRS.md`.
+   - Validate that all implemented features align with the project's use cases and functional requirements.
+
+2. **Compare Code with Documented Requirements**:
+   - Ensure all implemented requirements and features are accurately reflected in `SRS.md`.
+   - Check if the current code adheres to the specified use cases and functional expectations.
+
+3. **Update `SRS.md`**:
+   - Add or update the `SRS.md` with any new features, requirements, or changes introduced by the latest code.
+   - Include any new user interface changes, workflows, or system interactions.
+
+4. **Check for Missing Requirements**:
+   - Review any backlog or pending requirements to ensure they are addressed in future development cycles.
+   - Identify any features or use cases not yet implemented or documented and adjust the roadmap accordingly.
+
+5. **Review Diagrams and Test Cases**:
+   - Review existing diagrams in `SRS.md` and update them if new workflows, features, or interactions are introduced.
+   - Validate that documented requirements align with test cases and update them as necessary.
+
+6. **Open Issues for Gaps**:
+   - If any gaps between the codebase and the `SRS.md` are identified, open issues to track the necessary updates, bug fixes, or documentation improvements.
+
+7. **Generate a Summary Report**:
+   - Create a summary report of the code review, `SRS.md` updates, and any identified gaps for the project team to track progress.
+
+### Monthly Recurrence
+
+This process should be addressed **monthly** to ensure continuous alignment between the codebase and project documentation.
