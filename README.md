@@ -89,3 +89,86 @@ The image preprocessing steps have been enhanced to improve the accuracy of comp
 ## Improved Machine Learning Model
 
 The recognition algorithm now uses a more advanced machine learning model for component classification. The current model has been updated to incorporate Convolutional Neural Networks (CNNs) or other deep learning architectures, which have been trained on a larger dataset of labeled electrical components to achieve better recognition performance.
+
+## Resistor Detection and Color Code Interpretation
+
+The algorithm now includes a feature to detect resistors from a photo and interpret their color codes accurately. This feature supports 4-band, 5-band, and 6-band resistor color codes. The resistor's value, tolerance, and temperature coefficient (if applicable) are calculated and displayed.
+
+### Key Objectives:
+
+1. **Resistor Detection**:
+   - Automatically detect the presence of resistors in a photo.
+   - Identify different physical forms of resistors (e.g., axial lead, surface mount).
+   - Locate and isolate the color bands from the detected resistor image.
+
+2. **Color Code Recognition**:
+   - Identify and interpret the color bands on the resistor to determine its resistance value.
+   - Support different types of color codes based on the number of bands:
+     - **4-band** resistors (most common, includes tolerance band).
+     - **5-band** resistors (more precise, includes tolerance band).
+     - **6-band** resistors (adds a temperature coefficient band).
+
+3. **Handle Different Color Code Types**:
+   - **4-band resistors**: First two bands represent digits, the third is the multiplier, and the fourth is the tolerance.
+   - **5-band resistors**: First three bands represent digits, the fourth is the multiplier, and the fifth is the tolerance.
+   - **6-band resistors**: Same as the 5-band resistor, but with an additional band for the temperature coefficient.
+
+4. **Output the Resistor's Value**:
+   - Calculate and display the resistance value based on the interpreted color code.
+   - Show the tolerance and, in the case of 6-band resistors, the temperature coefficient.
+   - Return the resistor's value in standard form (e.g., 1.2kΩ ±5%).
+
+### Tasks:
+
+1. **Resistor Detection from Image**:
+   - Implement or integrate a computer vision algorithm to detect resistors in the image.
+   - Use shape detection or edge detection to identify the cylindrical or rectangular shape of resistors.
+
+2. **Isolate Color Bands**:
+   - After detecting the resistor, focus on identifying the bands.
+   - Use image segmentation techniques to isolate the color bands.
+   - Ensure accurate identification despite lighting variations, shadows, and other noise.
+
+3. **Color Code Interpretation**:
+   - Map the detected color bands to their respective values.
+   - Support 4-band, 5-band, and 6-band resistors.
+   - Implement a method to calculate the resistance, tolerance, and temperature coefficient based on the bands.
+
+4. **Handle Multiple Resistors in One Image**:
+   - If multiple resistors are detected in a single image, provide results for each detected resistor.
+
+5. **User Interface and Feedback**:
+   - Display the detected resistor(s) with an overlay showing the identified color bands.
+   - Show the calculated resistance value, tolerance, and temperature coefficient (if applicable).
+   - Provide visual feedback on any errors or uncertainty in the detection.
+
+### Considerations:
+
+- **Lighting and Image Quality**: Ensure the algorithm can handle images with different lighting conditions, brightness, and contrast levels.
+- **Orientation of Resistors**: The algorithm should be able to detect resistors regardless of their orientation (horizontal or vertical).
+- **Common Resistor Color Codes**: Make sure to support the standard color code chart for resistors.
+
+### Reference Resistor Color Code Chart:
+
+| Color  | Digit | Multiplier       | Tolerance | Temperature Coefficient |
+|--------|-------|------------------|-----------|-------------------------|
+| Black  | 0     | 1 Ω              |           |                         |
+| Brown  | 1     | 10 Ω             | ±1%       | 100 ppm/°C              |
+| Red    | 2     | 100 Ω            | ±2%       | 50 ppm/°C               |
+| Orange | 3     | 1,000 Ω          |           | 15 ppm/°C               |
+| Yellow | 4     | 10,000 Ω         |           | 25 ppm/°C               |
+| Green  | 5     | 100,000 Ω        | ±0.5%     |                         |
+| Blue   | 6     | 1,000,000 Ω      | ±0.25%    |                         |
+| Violet | 7     | 10,000,000 Ω     | ±0.1%     |                         |
+| Grey   | 8     |                  | ±0.05%    |                         |
+| White  | 9     |                  |           |                         |
+| Gold   |       | 0.1 Ω            | ±5%       |                         |
+| Silver |       | 0.01 Ω           | ±10%      |                         |
+
+### Acceptance Criteria:
+
+- The algorithm can successfully detect resistors from a photo and interpret their color codes.
+- The feature supports 4-band, 5-band, and 6-band resistor color codes.
+- The resistor's value (with tolerance and temperature coefficient if applicable) is calculated and displayed.
+- The detection is robust against common image challenges (lighting, orientation, etc.).
+- The feature provides a clear interface for users to interact with the detected resistors.
