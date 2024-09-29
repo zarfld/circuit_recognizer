@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuit Recognizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .preview {
+            margin-top: 20px;
+            position: relative;
+        }
+        .preview img {
+            max-width: 100%;
+            border: 1px solid #ccc;
+        }
+        .toolbar {
+            margin-top: 20px;
+        }
+        .toolbar button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Circuit Recognizer</h1>
+        <form id="uploadForm">
+            <input type="file" id="fileInput" accept=".png, .jpg, .jpeg, .pdf">
+            <button type="submit">Upload</button>
+        </form>
+        <div class="preview" id="previewPanel">
+            <img id="previewImage" src="" alt="Image Preview">
+        </div>
+        <div class="toolbar">
+            <button id="zoomIn">Zoom In</button>
+            <button id="zoomOut">Zoom Out</button>
+            <button id="pan">Pan</button>
+        </div>
+    </div>
 
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const previewImage = document.getElementById('previewImage');
+        const previewPanel = document.getElementById('previewPanel');
+        const zoomInButton = document.getElementById('zoomIn');
+        const zoomOutButton = document.getElementById('zoomOut');
+        const panButton = document.getElementById('pan');
+
+        let scale = 1;
+        let isPanning = false;
+        let startX, startY;
+
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        zoomInButton.addEventListener('click', function() {
+            scale += 0.1;
+            previewImage.style.transform = `scale(${scale})`;
+        });
+
+        zoomOutButton.addEventListener('click', function() {
+            scale = Math.max(0.1, scale - 0.1);
+            previewImage.style.transform = `scale(${scale})`;
+        });
+
+        panButton.addEventListener('mousedown', function(event) {
+            isPanning = true;
+            startX = event.clientX - previewPanel.offsetLeft;
+            startY = event.clientY - previewPanel.offsetTop;
+            previewPanel.style.cursor = 'move';
+        });
+
+        document.addEventListener('mousemove', function(event) {
+            if (isPanning) {
+                const x = event.clientX - startX;
+                const y = event.clientY - startY;
+                previewPanel.style.left = `${x}px`;
+                previewPanel.style.top = `${y}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            isPanning = false;
+            previewPanel.style.cursor = 'default';
+        });
+    </script>
+</body>
+</html>

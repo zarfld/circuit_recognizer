@@ -9,6 +9,11 @@ from copy import deepcopy
 from skimage import color
 import json
 import os
+from flask import Flask, request, jsonify, send_file
+import zipfile
+import io
+
+app = Flask(__name__)
 
 process_stage = 0
 prev_stage = -1
@@ -499,6 +504,37 @@ def mouse_event_edit(event,x,y,flags,param):
                 edit_flag = 1
                 break
 
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    file = request.files['file']
+    file_path = os.path.join('uploads', file.filename)
+    file.save(file_path)
+    handle_upload(file_path)
+    return jsonify({"message": "Image uploaded and processed successfully"})
+
+@app.route('/save_annotations', methods=['POST'])
+def save_annotations():
+    annotations = request.json
+    file_path = os.path.join('annotations', annotations['image_name'] + '.json')
+    with open(file_path, 'w') as f:
+        json.dump(annotations, f, indent=4)
+    return jsonify({"message": "Annotations saved successfully"})
+
+@app.route('/export_training_data', methods=['GET'])
+def export_training_data():
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+        for root, _, files in os.walk('annotations'):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zip_file.write(file_path, os.path.relpath(file_path, 'annotations'))
+        for root, _, files in os.walk('uploads'):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zip_file.write(file_path, os.path.relpath(file_path, 'uploads'))
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='training_data.zip')
+
 if __name__ == "__main__":
     cv2.namedWindow("recognizer")
     cv2.moveWindow("recognizer",200,100)
@@ -780,3 +816,4 @@ if __name__ == "__main__":
             break
 
     cv2.destroyAllWindows()
+    app.run(debug=True, port=5000)
