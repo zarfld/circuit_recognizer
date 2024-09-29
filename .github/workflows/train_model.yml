@@ -1,0 +1,40 @@
+name: Conditional Model Training
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'dataset/**'   # Monitor changes in the dataset directory
+
+jobs:
+  check-and-train:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # Ensure this includes necessary libraries like TensorFlow
+
+    - name: Check new training data
+      run: python check_new_data.py
+
+    - name: Run training job
+      if: success()  # This ensures that training only runs if the previous step (checking new data) succeeds
+      run: |
+        python train_model.py
+
+    - name: Upload trained model
+      if: success()  # Optional: Upload trained model if training was triggered
+      run: |
+        gsutil cp saved_model/my_model gs://your-bucket/models/
+      env:
