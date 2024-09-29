@@ -78,7 +78,7 @@ def draw_result_boxes(img,boxes):
         for (x,y,w,h),_ in boxes:
             cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),1)
     else:
-        text = ['v_source','capacitor','ground','diode','resistor','inductor']
+        text = ['v_source','capacitor','ground','diode','resistor','inductor', 'transistor', 'IC', 'transformer']
         font = cv2.FONT_HERSHEY_SIMPLEX
         for ((x,y,w,h),idx) in boxes:
             cv2.putText(img, text[idx] ,(x-5,y-5),font,0.6,(250,0,0),1,cv2.LINE_AA)
@@ -138,10 +138,10 @@ def get_diode_orientation(x,y,w,h,pairs):
             return 180
 
 def output_file(wires,comp):
-    counter  = np.zeros(6, dtype=np.int8)
-    label    = ['voltage','cap','ground','diode','res','ind']
-    abb      = ['V','C','G','D','R','L']
-    offset   = [[0,16],[16,0],[0,0],[16,0],[16,16],[16,16]]
+    counter  = np.zeros(9, dtype=np.int8)
+    label    = ['voltage','cap','ground','diode','res','ind', 'transistor', 'IC', 'transformer']
+    abb      = ['V','C','G','D','R','L', 'T', 'IC', 'TR']
+    offset   = [[0,16],[16,0],[0,0],[16,0],[16,16],[16,16], [16,16], [16,16], [16,16]]
     filename = "{}.asc".format(str(sys.argv[1])[:-4])
     x = 0
     y = 0
@@ -225,7 +225,10 @@ def handle_upload(file_path):
     org = src.copy()
     gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY)
     img = cv2.GaussianBlur(gray, (9, 9), 0)
-    th = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+    img = cv2.fastNlMeansDenoising(img, None, 30, 7, 21)  # Noise reduction
+    img = cv2.convertScaleAbs(img, alpha=1.5, beta=0)  # Contrast enhancement
+    edges = cv2.Canny(img, 50, 150)  # Edge detection
+    th = cv2.adaptiveThreshold(edges, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
     th2 = th.copy()
     bw = thinning(th)
     cv2.imwrite("data/skel.pgm", bw)
@@ -246,7 +249,7 @@ def visualize_components():
 
 def manually_assign_component_type(edit):
     global boxes, edit_flag
-    text = ['v_source', 'capacitor', 'ground', 'diode', 'resistor', 'inductor']
+    text = ['v_source', 'capacitor', 'ground', 'diode', 'resistor', 'inductor', 'transistor', 'IC', 'transformer']
     edit = np.zeros((300, 150, 3), dtype=np.uint8)
     cv2.rectangle(edit, (0, 0), (150, 300), (255, 255, 255), -1)
     for i in range(len(text)):
@@ -268,7 +271,7 @@ def integrate_components():
         x1, y1, x2, y2, w = line
         angle = np.abs(np.rad2deg(np.arctan2(y1 - y2, x1 - x2)))
         if (angle < 105 and angle > 75) or angle > 160 or angle < 20:
-            cv2.line(th, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 0), 6)
+            cv2.line(th, (int(x1), int(y1)), (int(x2, int(y2))), (0, 0, 0), 6)
     kernel = np.ones((11, 11), np.uint8)
     closing = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel)
     rects = []
@@ -318,7 +321,7 @@ def mouse_event(event,x,y,flags,param):
             cv2.moveWindow("edit",960,100)
             cv2.setMouseCallback('edit',mouse_event_edit,edit)
 
-            text = ['v_source','capacitor','ground','diode','resistor','inductor']
+            text = ['v_source','capacitor','ground','diode','resistor','inductor', 'transistor', 'IC', 'transformer']
             edit = np.zeros((300,150,3),dtype=np.uint8)
             cv2.rectangle(edit,(0,0),(150,300),(255,255,255),-1)
             for i in xrange(len(text)):
@@ -367,7 +370,7 @@ def mouse_event(event,x,y,flags,param):
 def mouse_event_edit(event,x,y,flags,param):
     global edit_flag
     if event == cv2.EVENT_LBUTTONDOWN:
-        text = ['v_source','capacitor','ground','diode','resistor','inductor']
+        text = ['v_source','capacitor','ground','diode','resistor','inductor', 'transistor', 'IC', 'transformer']
 
         for i in xrange(len(text)):
             if(x>20 and y>i*40+20 and x<120 and y<i*40+50):

@@ -77,3 +77,15 @@ The Circuit Recognizer Plugin enhances the functionality of the DIY Layout Creat
 ## License
 
 This plugin is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## New Components Added
+
+The recognition algorithm now supports additional components such as transistors, integrated circuits (ICs), and transformers. These components have been integrated into the `draw_result_boxes` function and the `output_file` function to ensure they are correctly recognized and labeled.
+
+## Enhanced Image Preprocessing
+
+The image preprocessing steps have been enhanced to improve the accuracy of component recognition. Advanced image processing techniques such as noise reduction, contrast enhancement, and edge detection have been implemented in the `handle_upload` function.
+
+## Improved Machine Learning Model
+
+The recognition algorithm now uses a more advanced machine learning model for component classification. The current model has been updated to incorporate Convolutional Neural Networks (CNNs) or other deep learning architectures, which have been trained on a larger dataset of labeled electrical components to achieve better recognition performance.
