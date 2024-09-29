@@ -7,6 +7,7 @@ from random import randint
 from segment import *
 from copy import deepcopy
 from skimage import color
+import pytesseract
 
 process_stage = 0
 prev_stage = -1
@@ -91,6 +92,16 @@ def draw_result_boxes(img,boxes):
             else:
                 cv2.putText(img, text[idx] ,(x-5,y-5),font,0.6,(250,0,0),1,cv2.LINE_AA)
             cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),1)
+            # Extract text using OCR
+            roi = img[y:y+h, x:x+w]
+            text = extract_text_from_image(roi)
+            if text:
+                cv2.putText(img, text, (x, y+h+20), font, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
+
+def extract_text_from_image(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    text = pytesseract.image_to_string(gray)
+    return text
 
 def get_v_s_orientation(x,y,w,h,pairs):
     lines = []
@@ -247,6 +258,30 @@ def handle_upload(file_path):
     h_boxes = box_between_ends(h_pairs)
     boxes = v_boxes + h_boxes
     detect_resistors(src)
+    # Generate synthetic data
+    generate_synthetic_data()
+
+def generate_synthetic_data():
+    import random
+    from PIL import Image, ImageDraw, ImageFont
+
+    fonts = ["arial.ttf", "times.ttf", "courier.ttf"]
+    part_numbers = ["R1", "C2", "L3", "D4"]
+    part_values = ["10kΩ", "100nF", "1mH", "1N4148"]
+
+    for i in range(10):
+        img = Image.new("RGB", (640, 480), (255, 255, 255))
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.truetype(random.choice(fonts), random.randint(10, 20))
+
+        for _ in range(random.randint(5, 15)):
+            x, y = random.randint(0, 600), random.randint(0, 440)
+            part_number = random.choice(part_numbers)
+            part_value = random.choice(part_values)
+            draw.text((x, y), part_number, font=font, fill=(0, 0, 0))
+            draw.text((x, y + 20), part_value, font=font, fill=(0, 0, 0))
+
+        img.save(f"synthetic_data/synthetic_{i}.png")
 
 def visualize_components():
     global src, org, boxes

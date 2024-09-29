@@ -172,3 +172,114 @@ The algorithm now includes a feature to detect resistors from a photo and interp
 - The resistor's value (with tolerance and temperature coefficient if applicable) is calculated and displayed.
 - The detection is robust against common image challenges (lighting, orientation, etc.).
 - The feature provides a clear interface for users to interact with the detected resistors.
+
+## OCR Integration and Synthetic Data Generation
+
+### OCR Integration
+
+To enhance the recognition of text annotations in circuit diagrams, we have integrated Tesseract OCR into the `circuit_recognizer` framework. This allows the system to recognize and extract optional text (numbers, values, and units such as Ω, μF) for components.
+
+#### Installation
+
+1. **Install Tesseract OCR**: Ensure Tesseract OCR is installed on your system. You can install it using the following command:
+   ```sh
+   sudo apt-get install tesseract-ocr
+   ```
+
+2. **Install pytesseract**: Add `pytesseract` to your `requirements.txt` file to use Tesseract OCR in Python. Update the `requirements.txt` file as follows:
+   ```plaintext
+   numpy
+   opencv-python
+   imutils
+   pylsd
+   pytest
+   flake8
+   mypy
+   scipy
+   scikit-image
+   pytesseract
+   ```
+
+#### Usage
+
+The `extract_text_from_image` function in `main.py` performs OCR on image regions to extract text. This function is integrated into the `draw_result_boxes` function to include OCR text extraction for components with text annotations.
+
+```python
+import pytesseract
+
+def extract_text_from_image(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    text = pytesseract.image_to_string(gray)
+    return text
+```
+
+### Synthetic Data Generation
+
+To improve the model’s adaptability, we have implemented synthetic data generation. This allows the system to automatically generate synthetic data with and without part numbers and values, covering a broad range of cases.
+
+#### Usage
+
+The `generate_synthetic_data` function in `main.py` creates synthetic images with various fonts, text sizes, and layouts. This function is called within the `handle_upload` function to generate synthetic data during the upload process.
+
+```python
+import random
+from PIL import Image, ImageDraw, ImageFont
+
+def generate_synthetic_data():
+    fonts = ["arial.ttf", "times.ttf", "courier.ttf"]
+    part_numbers = ["R1", "C2", "L3", "D4"]
+    part_values = ["10kΩ", "100nF", "1mH", "1N4148"]
+
+    for i in range(10):
+        img = Image.new("RGB", (640, 480), (255, 255, 255))
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.truetype(random.choice(fonts), random.randint(10, 20))
+
+        for _ in range(random.randint(5, 15)):
+            x, y = random.randint(0, 600), random.randint(0, 440)
+            part_number = random.choice(part_numbers)
+            part_value = random.choice(part_values)
+            draw.text((x, y), part_number, font=font, fill=(0, 0, 0))
+            draw.text((x, y + 20), part_value, font=font, fill=(0, 0, 0))
+
+        img.save(f"synthetic_data/synthetic_{i}.png")
+```
+
+By following these steps, you will enhance the training data for the `circuit_recognizer` and improve the recognition of components, part numbers, and part values.
+
+## Improved Machine Learning Model
+
+The recognition algorithm now uses a more advanced machine learning model for component classification. The current model has been updated to incorporate Convolutional Neural Networks (CNNs) or other deep learning architectures, which have been trained on a larger dataset of labeled electrical components to achieve better recognition performance.
+
+### Key Objectives:
+
+1. **Model Architecture**:
+   - Implement a Convolutional Neural Network (CNN) or other deep learning architecture for component classification.
+   - Ensure the model is capable of handling cases where part numbers and values are absent.
+
+2. **Training Data**:
+   - Use the enhanced training data that includes components with and without part numbers and values.
+   - Include handwritten and printed variations of circuit diagrams with and without optional part information.
+
+3. **Incremental Model Training**:
+   - Continuously train the model using new data to improve recognition, particularly in distinguishing between cases where optional part information is provided and where it is not.
+
+### Tasks:
+
+1. **Model Implementation**:
+   - Implement a CNN or other deep learning architecture for component classification.
+   - Ensure the model is capable of handling cases where part numbers and values are absent.
+
+2. **Training**:
+   - Train the model using the enhanced training data that includes components with and without part numbers and values.
+   - Include handwritten and printed variations of circuit diagrams with and without optional part information.
+
+3. **Evaluation**:
+   - Evaluate the model's performance on a test dataset that includes components with and without part numbers and values.
+   - Ensure the model can accurately recognize both components with and without these optional details.
+
+### Acceptance Criteria:
+
+- The model can accurately recognize both components with and without part numbers and values.
+- The model's performance is evaluated on a test dataset that includes components with and without part numbers and values.
+- The model is capable of handling cases where part numbers and values are absent.
