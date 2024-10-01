@@ -42,3 +42,9 @@ If you found any discrepancies between the code and the SRS.md file, please desc
 
 **Missing or Incorrect Documentation**
 Describe any missing or incorrect documentation related to the issue.
+
+**Link to CI Pipeline Stage**
+Specify the CI pipeline stage this issue is related to (e.g., build, test, deploy).
+
+**Pipeline Environment**
+Specify the pipeline environment this issue applies to (e.g., dev, staging, prod).

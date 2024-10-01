@@ -41,6 +41,13 @@ jobs:
         run: |
           pytest
 
+      - name: Update issue labels
+        if: success()
+        run: |
+          gh issue list --label "pending CI" --json number --jq '.[].number' | xargs -I {} gh issue edit {} --add-label "passed CI" --remove-label "pending CI"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   lint:
     runs-on: ubuntu-latest
     strategy:
@@ -122,3 +129,17 @@ jobs:
       - name: Generate summary report
         run: |
           python generate_summary_report.py
+
+  auto-close-issues:
+    runs-on: ubuntu-latest
+    needs: [test, lint, type-check, validate-srs]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Auto-close issues
+        if: success()
+        run: |
+          gh issue list --label "in production" --json number --jq '.[].number' | xargs -I {} gh issue edit {} --add-label "resolved" --state closed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

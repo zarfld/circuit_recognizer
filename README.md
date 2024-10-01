@@ -274,3 +274,65 @@ To ensure the long-term quality and consistency of both the codebase and the pro
 ### Monthly Recurrence
 
 This process should be addressed **monthly** to ensure continuous alignment between the codebase and project documentation.
+
+## Link Issues to CI Pipeline Stages
+
+### Purpose
+
+Ensure that each issue is connected to specific pipeline stages (e.g., build, test, deploy).
+
+### Best Practice
+
+- Add issue references (e.g., `#123`) in pull requests, commits, and pipeline configurations.
+- Use keywords in commit messages like `Closes #123` to automatically close the issue when the CI pipeline successfully completes a deployment.
+- Example commit message: `Fix build issue for Docker integration. Closes #123`.
+
+## Automate Status Updates Using Labels
+
+### Purpose
+
+Automatically apply labels to issues based on the status of the CI pipeline.
+
+### Best Practice
+
+- Set up automation rules (using GitHub Actions, GitLab CI, or other CI tools) to label issues based on their pipeline progress (e.g., `in testing`, `in production`).
+- Use labels to reflect the current state of issues within the pipeline. For example:
+  - `pending CI`: When a PR is created but not yet tested.
+  - `passed CI`: When an issue’s PR has passed CI checks.
+  - `failed CI`: If a pipeline fails and requires debugging.
+
+## Use Milestones for Releases and Pipeline Goals
+
+### Purpose
+
+Align issues with specific releases or CI/CD pipeline goals using milestones.
+
+### Best Practice
+
+- Create **milestones** tied to releases or significant pipeline phases (e.g., `v1.0 release`, `production rollout`).
+- Group issues into milestones that represent stages in your CI pipeline, such as "Pre-production", "Production", or "Next Release".
+- Set deadlines for milestones to ensure issues are tracked and completed within the desired timeframe of the CI pipeline.
+
+## CI Pipeline Triggers for Issue Progress
+
+### Purpose
+
+Automate pipeline execution based on issue status updates.
+
+### Best Practice
+
+- Trigger CI pipelines automatically when an issue is moved into certain stages (e.g., when an issue moves from `ready for testing` to `in progress`).
+- Example:
+  - When an issue is labeled `in progress`, the CI pipeline triggers a build and runs tests automatically.
+  - When an issue is labeled `in review`, the CI pipeline could trigger a deployment to a staging environment for further QA.
+
+## CI Pipeline Alerts for Failed Builds
+
+### Purpose
+
+Notify developers when a pipeline fails due to an issue-related PR or commit.
+
+### Best Practice
+
+- Integrate notifications into your CI pipeline (e.g., via Slack, email, or GitHub notifications) to alert contributors when a build or test fails related to an issue.
+- Automatically post updates in the issue's comments when a build fails or passes, providing detailed logs for debugging.

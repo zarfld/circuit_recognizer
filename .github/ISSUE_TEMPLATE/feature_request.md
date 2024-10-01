@@ -21,3 +21,9 @@ Add any other context or screenshots about the feature request here.
 
 **SRS.md Update Required**
 If this feature request requires updates to the SRS.md file, please describe the new feature and its impact on the SRS.md file.
+
+**Link to CI Pipeline Stage**
+Specify the CI pipeline stage this issue is related to (e.g., build, test, deploy).
+
+**Pipeline Environment**
+Specify the pipeline environment this issue applies to (e.g., dev, staging, prod).
