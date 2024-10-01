@@ -499,6 +499,32 @@ def mouse_event_edit(event,x,y,flags,param):
                 edit_flag = 1
                 break
 
+def update_issue_labels(issue_number, new_label, remove_label):
+    command = f"gh issue edit {issue_number} --add-label {new_label} --remove-label {remove_label}"
+    os.system(command)
+
+def trigger_ci_pipeline(issue_number, status):
+    if status == "in progress":
+        command = f"gh workflow run build-and-test.yml --ref main --issue {issue_number}"
+    elif status == "in review":
+        command = f"gh workflow run deploy-to-staging.yml --ref main --issue {issue_number}"
+    os.system(command)
+
+def notify_developers(issue_number, status):
+    if status == "failed":
+        command = f"gh issue comment {issue_number} --body 'Build or test failed. Please check the logs for details.'"
+    elif status == "passed":
+        command = f"gh issue comment {issue_number} --body 'Build or test passed successfully.'"
+    os.system(command)
+
+def auto_close_issue(issue_number):
+    command = f"gh issue edit {issue_number} --add-label resolved --state closed"
+    os.system(command)
+
+def enforce_ci_checks_for_pr(pr_number):
+    command = f"gh pr checks {pr_number} --required"
+    os.system(command)
+
 if __name__ == "__main__":
     cv2.namedWindow("recognizer")
     cv2.moveWindow("recognizer",200,100)
