@@ -365,3 +365,44 @@ def remove_parallel_lines(lsd_lines,axis):
 				result.append([lines[i][0],lines[i][1],lines[i][2],lines[i][3],1])
 
 	return result
+
+def segment_color_bands(resistor_image):
+    height, width, _ = resistor_image.shape
+    band_width = width // 6
+    bands = []
+    for i in range(6):
+        band = resistor_image[:, i * band_width:(i + 1) * band_width]
+        bands.append(band)
+    return bands
+
+def calculate_color_distance(color1, color2):
+    return np.linalg.norm(color1 - color2)
+
+def identify_color_band(band, color_codes):
+    min_distance = float('inf')
+    identified_color = None
+    for color_name, color_value in color_codes.items():
+        distance = calculate_color_distance(band, color_value)
+        if distance < min_distance:
+            min_distance = distance
+            identified_color = color_name
+    return identified_color
+
+def interpret_color_code(bands, color_codes):
+    color_bands = [identify_color_band(band, color_codes) for band in bands]
+    return color_bands
+
+def calculate_resistance(color_bands, color_codes):
+    if len(color_bands) == 4:
+        resistance = (color_codes[color_bands[0]][0] * 10 + color_codes[color_bands[1]][0]) * color_codes[color_bands[2]][1]
+        tolerance = color_codes[color_bands[3]][2]
+        temp_coeff = None
+    elif len(color_bands) == 5:
+        resistance = (color_codes[color_bands[0]][0] * 100 + color_codes[color_bands[1]][0] * 10 + color_codes[color_bands[2]][0]) * color_codes[color_bands[3]][1]
+        tolerance = color_codes[color_bands[4]][2]
+        temp_coeff = None
+    elif len(color_bands) == 6:
+        resistance = (color_codes[color_bands[0]][0] * 100 + color_codes[color_bands[1]][0] * 10 + color_codes[color_bands[2]][0]) * color_codes[color_bands[3]][1]
+        tolerance = color_codes[color_bands[4]][2]
+        temp_coeff = color_codes[color_bands[5]][3]
+    return resistance, tolerance, temp_coeff
