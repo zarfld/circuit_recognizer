@@ -88,6 +88,49 @@ def create_cnn_model(input_shape, num_classes):
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
+def interpret_color_code(resistor_image):
+    resistor_image = cv2.cvtColor(resistor_image, cv2.COLOR_BGR2RGB)
+    resistor_image = cv2.resize(resistor_image, (200, 50))
+    bands = segment_color_bands(resistor_image)
+    colors = [color.rgb2lab(band) for band in bands]
+    color_codes = {
+        "black": (0, 0, 0),
+        "brown": (1, 10, 1, 100),
+        "red": (2, 100, 2, 50),
+        "orange": (3, 1000, None, 15),
+        "yellow": (4, 10000, None, 25),
+        "green": (5, 100000, 0.5, None),
+        "blue": (6, 1000000, 0.25, None),
+        "violet": (7, 10000000, 0.1, None),
+        "grey": (8, None, 0.05, None),
+        "white": (9, None, None, None),
+        "gold": (None, 0.1, 5, None),
+        "silver": (None, 0.01, 10, None)
+    }
+    band_values = []
+    for color_lab in colors:
+        min_distance = float('inf')
+        closest_color = None
+        for color_name, color_value in color_codes.items():
+            distance = np.linalg.norm(color_lab - color.rgb2lab(np.uint8([[color_value[:3]]])))
+            if distance < min_distance:
+                min_distance = distance
+                closest_color = color_name
+        band_values.append(color_codes[closest_color])
+    if len(band_values) == 4:
+        resistance = (band_values[0][0] * 10 + band_values[1][0]) * band_values[2][1]
+        tolerance = band_values[3][2]
+        temp_coeff = None
+    elif len(band_values) == 5:
+        resistance = (band_values[0][0] * 100 + band_values[1][0] * 10 + band_values[2][0]) * band_values[3][1]
+        tolerance = band_values[4][2]
+        temp_coeff = None
+    elif len(band_values) == 6:
+        resistance = (band_values[0][0] * 100 + band_values[1][0] * 10 + band_values[2][0]) * band_values[3][1]
+        tolerance = band_values[4][2]
+        temp_coeff = band_values[5][3]
+    return resistance, tolerance, temp_coeff
+
 if __name__ == "__main__":
     image_path = "data/train"
     trainData, trainLabel = load_trainData(image_path)
