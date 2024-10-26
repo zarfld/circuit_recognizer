@@ -198,8 +198,8 @@ The metadata file is in JSON format and includes the following fields:
   "components": [
     {
       "type": "resistor",
-      "part_number": "unknown",
-      "value": "",
+      "part_number": "R1",
+      "value": "10kΩ",
       "coordinates": {
         "x": 100,
         "y": 150,

@@ -37,16 +37,29 @@ def verify_annotations():
                         return False
     return True
 
+def check_metadata_consistency():
+    """Check the consistency and completeness of metadata files."""
+    for filename in os.listdir(dataset_dir):
+        if filename.endswith(".json"):
+            with open(os.path.join(dataset_dir, filename), 'r') as file:
+                data = json.load(file)
+                if 'image_path' not in data or 'description' not in data or 'components' not in data:
+                    return False
+                for component in data['components']:
+                    if 'type' not in component or 'coordinates' not in component:
+                        return False
+    return True
+
 if __name__ == "__main__":
     current_count = get_current_data_count()
     previous_count = get_previous_data_count()
 
     new_files_count = current_count - previous_count
 
-    if new_files_count >= threshold and verify_annotations():
+    if new_files_count >= threshold and verify_annotations() and check_metadata_consistency():
         print(f"New files detected: {new_files_count}, triggering training.")
         update_previous_data_count(current_count)
         exit(0)  # Exit with status 0 to trigger training
     else:
-        print(f"Only {new_files_count} new files or annotations missing, training not triggered.")
+        print(f"Only {new_files_count} new files or annotations/metadata missing, training not triggered.")
         exit(1)  # Exit with status 1 to skip training
