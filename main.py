@@ -11,6 +11,7 @@ import json
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import pytesseract
 
 app = Flask(__name__)
 CORS(app)
@@ -422,6 +423,26 @@ data_dir = "path/to/training/data"
 create_metadata_for_existing_data(data_dir)
 update_training_pipeline(data_dir)
 
+def preprocess_image_for_ocr(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+    gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+    gray = cv2.medianBlur(gray, 3)
+    return gray
+
+def extract_text_from_image(image):
+    preprocessed_image = preprocess_image_for_ocr(image)
+    text = pytesseract.image_to_string(preprocessed_image, config='--psm 6')
+    return text
+
+def link_text_to_components(image, components):
+    for component in components:
+        x, y, w, h = component['boundingBox'].values()
+        component_image = image[y:y+h, x:x+w]
+        text = extract_text_from_image(component_image)
+        component['partNumber'] = text
+    return components
+
 # mouse callback function
 def mouse_event(event,x,y,flags,param):
     global process_stage,prev_stage,ix,iy,boxes,edit_flag,undo_stack,redo_stack
@@ -684,7 +705,7 @@ if __name__ == "__main__":
                         min_edg[0] = min_edg[1]
                         min_edg[1] = [temp_edg[0],temp_edg[1]]
                         minIdx[0]  = minIdx[1]
-                        minIdx[2]  = minIdx[3]
+                        minIdx[2]  = temp_edg[2]
                         minIdx[1]  = temp_edg[2]
                         minIdx[3]  = temp_edg[3]
 
