@@ -336,3 +336,92 @@ Notify developers when a pipeline fails due to an issue-related PR or commit.
 
 - Integrate notifications into your CI pipeline (e.g., via Slack, email, or GitHub notifications) to alert contributors when a build or test fails related to an issue.
 - Automatically post updates in the issue's comments when a build fails or passes, providing detailed logs for debugging.
+
+## Browser-Based Interface for Training Data Management
+
+### Overview
+
+The browser-based interface allows users to upload, view, annotate, and manage training data for the `circuit_recognizer` model. The interface displays circuit images and provides tools for manually annotating components, part numbers, and values. Users can also review auto-detected components and correct them as needed.
+
+### Key Features
+
+1. **Upload and Preview Images**:
+   - **Image Upload Tool**: Users can upload circuit images in common formats (PNG, JPEG, PDF).
+   - **Preview Panel**: After uploading an image, users can preview it directly in the browser. Zooming and panning features are available for easier navigation.
+
+2. **Auto-Detection and Manual Annotation**:
+   - **Component Detection Preview**: The system automatically highlights detected components (resistors, capacitors, transistors, etc.) and displays bounding boxes around them.
+   - **Greyed Out Undetected Components**: Components that the system cannot detect are greyed out, allowing the user to manually annotate them.
+   - **Manual Annotation Tool**: Users can manually draw bounding boxes around components that were not automatically detected and label them as resistors, capacitors, etc.
+   - **Part Numbers and Values**: For each component, users can optionally enter or edit part numbers and values via text input fields.
+
+3. **Bounding Box and Text Annotation**:
+   - **Bounding Box Creation**: Users can create or adjust bounding boxes around components by dragging on the image. The bounding box shows resize handles and provides a clear visualization.
+   - **Component Information Panel**: For each selected bounding box, a side panel or pop-up allows users to specify the component type, part number, and value (if available).
+   - **Text Placement**: Users can position part numbers and values around components and link them to the appropriate bounding box.
+
+4. **Interactive Feedback for Auto-Detection**:
+   - **Highlight Correct and Incorrect Detections**: Correctly detected components are highlighted in green, while components that need user input or correction are highlighted in red or grey.
+   - **Accept or Modify Auto-Detections**: Users can accept the system's auto-detected bounding boxes or modify them by resizing or relabeling the components.
+
+5. **Image Metadata Display**:
+   - **Component List**: Displays a list of all detected and annotated components. Each component has its type, part number, and value listed, and clicking on a component in the list highlights it on the image.
+   - **Image Metadata**: Shows metadata such as image name, upload date, and a short description of the circuit (editable by the user).
+
+6. **Save and Export Annotations**:
+   - **Save Changes**: Allows users to save their annotations to a file (JSON or XML) that stores component types, part numbers, values, and bounding box coordinates.
+   - **Export Training Data**: Users can export the annotated images and metadata as a training data package (ZIP archive containing images and their corresponding JSON/XML files).
+   - **Load Previous Annotations**: Supports re-loading previously saved annotation files so users can continue editing.
+
+7. **Pipeline Integration**:
+   - **Trigger Pipeline Job**: Optionally, users can trigger a pipeline job from the interface to generate training data for `circuit_recognizer` directly after annotation.
+   - **Status Notifications**: Provides feedback on pipeline job status (e.g., "Training data generated successfully" or "Pipeline job failed").
+
+8. **User Authentication (Optional)**:
+   - If needed, implements user authentication so that only authorized users can upload images, annotate data, and trigger pipeline jobs. Different access levels (admin, reviewer, etc.) can be introduced.
+
+### User Flow
+
+1. **Upload**:
+   Users navigate to the "Upload" section, where they can drag-and-drop circuit images or select them from their file system. The image is displayed in a preview panel.
+
+2. **Auto-Detection**:
+   After upload, the system attempts to detect components automatically. Detected components are highlighted in green, and undetected areas are greyed out.
+
+3. **Manual Annotation**:
+   Users can manually annotate greyed-out components by drawing bounding boxes and selecting the component type (resistor, capacitor, etc.). They can also enter optional part numbers and values.
+
+4. **Review and Modify**:
+   Users review the automatically detected and manually annotated components. They can edit bounding boxes, reposition part numbers, or correct any incorrect auto-detections.
+
+5. **Save and Export**:
+   Once satisfied, users can save their work and export the image along with its corresponding annotations as a training data file.
+
+6. **Pipeline Job (Optional)**:
+   If pipeline integration is enabled, users can trigger a job to automatically generate training data from their annotations.
+
+### UI Components
+
+1. **Toolbar**:
+   - Buttons for "Upload", "Save", "Export", and "Trigger Pipeline".
+   - Tools for zooming, panning, and creating bounding boxes.
+
+2. **Image Preview Panel**:
+   - Displays the uploaded image with detected and annotated components.
+   - Allows users to interact with the image (draw bounding boxes, resize, annotate).
+
+3. **Annotation Side Panel**:
+   - Displays the details of the selected component (type, part number, value).
+   - Provides input fields for users to modify part information or assign new labels.
+
+4. **Component List**:
+   - A list view that shows all detected and annotated components, their types, part numbers, and values.
+   - Clicking on a component in the list highlights it in the image.
+
+### Acceptance Criteria
+
+1. **Interactive Annotation**: Users can upload circuit images, annotate components, part numbers, and values, and save/export these annotations.
+2. **Auto-Detection Feedback**: Auto-detected components are clearly displayed, and users can easily correct or modify detections.
+3. **Training Data Generation**: Users can export annotated images and metadata into a training dataset format suitable for use in `circuit_recognizer`.
+4. **Pipeline Job (Optional)**: If integrated, users can trigger a pipeline job from the UI to generate the training data automatically.
+5. **Component Metadata**: The UI shows a list of components with their type, part number, and value.

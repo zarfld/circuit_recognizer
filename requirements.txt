@@ -8,3 +8,5 @@ mypy
 scipy
 scikit-image
 json
+Flask
+flask-cors

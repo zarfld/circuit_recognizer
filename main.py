@@ -9,6 +9,11 @@ from copy import deepcopy
 from skimage import color
 import json
 import os
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
 
 process_stage = 0
 prev_stage = -1
@@ -524,6 +529,34 @@ def auto_close_issue(issue_number):
 def enforce_ci_checks_for_pr(pr_number):
     command = f"gh pr checks {pr_number} --required"
     os.system(command)
+
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if file:
+        file_path = os.path.join('uploads', file.filename)
+        file.save(file_path)
+        handle_upload(file_path)
+        return jsonify({'message': 'File uploaded successfully'}), 200
+
+@app.route('/annotations', methods=['POST'])
+def save_annotations():
+    data = request.get_json()
+    annotations = data.get('annotations', [])
+    image_path = data.get('image_path', '')
+    generate_metadata_file(image_path, annotations)
+    return jsonify({'message': 'Annotations saved successfully'}), 200
+
+@app.route('/export', methods=['GET'])
+def export_data():
+    data_dir = 'path/to/training/data'
+    create_metadata_for_existing_data(data_dir)
+    update_training_pipeline(data_dir)
+    return jsonify({'message': 'Data exported successfully'}), 200
 
 if __name__ == "__main__":
     cv2.namedWindow("recognizer")
