@@ -2,6 +2,8 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, Flatten
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import json
+import os
 
 def load_data():
     # Load and preprocess your data
@@ -18,6 +20,21 @@ def build_model():
     ])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
+
+def preprocess_annotations(data_dir):
+    annotations = []
+    for filename in os.listdir(data_dir):
+        if filename.endswith(".json"):
+            with open(os.path.join(data_dir, filename), 'r') as file:
+                data = json.load(file)
+                for component in data.get('components', []):
+                    annotations.append({
+                        'componentType': component.get('componentType', ''),
+                        'partNumber': component.get('partNumber', ''),
+                        'value': component.get('value', ''),
+                        'boundingBox': component.get('boundingBox', {})
+                    })
+    return annotations
 
 def train_model():
     train_data, val_data = load_data()

@@ -78,10 +78,15 @@
         const valueInput = document.getElementById('value');
 
         let annotations = [];
+        let isDrawing = false;
+        let startX, startY, endX, endY;
 
         imageUpload.addEventListener('change', handleImageUpload);
         saveAnnotationsButton.addEventListener('click', saveAnnotations);
         exportDataButton.addEventListener('click', exportData);
+        imagePreview.addEventListener('mousedown', startDrawing);
+        imagePreview.addEventListener('mousemove', draw);
+        imagePreview.addEventListener('mouseup', endDrawing);
 
         function handleImageUpload(event) {
             const file = event.target.files[0];
@@ -101,17 +106,54 @@
             }
         }
 
-        function saveAnnotations() {
+        function startDrawing(event) {
+            isDrawing = true;
+            startX = event.offsetX;
+            startY = event.offsetY;
+        }
+
+        function draw(event) {
+            if (!isDrawing) return;
+            const ctx = imagePreview.getContext('2d');
+            ctx.clearRect(0, 0, imagePreview.width, imagePreview.height);
+            ctx.drawImage(imagePreview, 0, 0);
+            endX = event.offsetX;
+            endY = event.offsetY;
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+        }
+
+        function endDrawing(event) {
+            if (!isDrawing) return;
+            isDrawing = false;
             const componentType = componentTypeInput.value;
             const partNumber = partNumberInput.value;
             const value = valueInput.value;
             const annotation = {
                 componentType,
                 partNumber,
-                value
+                value,
+                boundingBox: {
+                    startX,
+                    startY,
+                    endX,
+                    endY
+                }
             };
             annotations.push(annotation);
             alert('Annotation saved!');
+        }
+
+        function saveAnnotations() {
+            const dataStr = JSON.stringify(annotations, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'annotations.json';
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         function exportData() {

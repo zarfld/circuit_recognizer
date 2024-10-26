@@ -1,4 +1,5 @@
 import os
+import json
 
 # Path to the dataset directory
 dataset_dir = 'dataset/'  # Update with your actual dataset directory
@@ -25,16 +26,27 @@ def update_previous_data_count(new_count):
     with open(previous_count_file, 'w') as file:
         file.write(str(new_count))
 
+def verify_annotations():
+    """Verify the presence of part numbers and values in the training data."""
+    for filename in os.listdir(dataset_dir):
+        if filename.endswith(".json"):
+            with open(os.path.join(dataset_dir, filename), 'r') as file:
+                data = json.load(file)
+                for component in data.get('components', []):
+                    if 'partNumber' not in component or 'value' not in component:
+                        return False
+    return True
+
 if __name__ == "__main__":
     current_count = get_current_data_count()
     previous_count = get_previous_data_count()
 
     new_files_count = current_count - previous_count
 
-    if new_files_count >= threshold:
+    if new_files_count >= threshold and verify_annotations():
         print(f"New files detected: {new_files_count}, triggering training.")
         update_previous_data_count(current_count)
         exit(0)  # Exit with status 0 to trigger training
     else:
-        print(f"Only {new_files_count} new files, training not triggered.")
+        print(f"Only {new_files_count} new files or annotations missing, training not triggered.")
         exit(1)  # Exit with status 1 to skip training
