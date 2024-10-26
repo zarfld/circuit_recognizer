@@ -29,16 +29,18 @@ def preprocess_annotations(data_dir):
                 data = json.load(file)
                 for component in data.get('components', []):
                     annotations.append({
-                        'componentType': component.get('componentType', ''),
-                        'partNumber': component.get('partNumber', ''),
+                        'componentType': component.get('type', ''),
+                        'partNumber': component.get('part_number', ''),
                         'value': component.get('value', ''),
-                        'boundingBox': component.get('boundingBox', {})
+                        'boundingBox': component.get('coordinates', {})
                     })
     return annotations
 
 def train_model():
     train_data, val_data = load_data()
     model = build_model()
+    annotations = preprocess_annotations('dataset/train/')
+    # Use annotations for training and evaluation
     model.fit(train_data, epochs=10, validation_data=val_data)
     model.save('saved_model/my_model')
 
